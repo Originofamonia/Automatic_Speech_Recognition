@@ -35,6 +35,7 @@ phn = ['aa', 'ae', 'ah', 'ao', 'aw', 'ax', 'ax-h', 'axr', 'ay', 'b', 'bcl', 'ch'
 ## cleaned phonemes
 #phn = ['sil', 'aa', 'ae', 'ah', 'ao', 'aw', 'ax', 'ax-h', 'ay', 'b', 'ch', 'd', 'dh', 'dx', 'eh', 'el', 'en', 'epi', 'er', 'ey', 'f', 'g', 'hh', 'ih', 'ix', 'iy', 'jh', 'k', 'l', 'm', 'n', 'ng', 'ow', 'oy', 'p', 'q', 'r', 's', 'sh', 't', 'th', 'uh', 'uw', 'v', 'w', 'y', 'z', 'zh']
 
+
 def wav2feature(rootdir, save_directory, mode, feature_len, level, keywords, win_len, win_step,  seq2seq, save):
     feat_dir = os.path.join(save_directory, level, keywords, mode)
     label_dir = os.path.join(save_directory, level, keywords, 'label')
@@ -46,15 +47,17 @@ def wav2feature(rootdir, save_directory, mode, feature_len, level, keywords, win
     for subdir, dirs, files in os.walk(rootdir):
         for file in files:
             fullFilename = os.path.join(subdir, file)
-            filenameNoSuffix =  os.path.splitext(fullFilename)[0]
+            filenameNoSuffix = os.path.splitext(fullFilename)[0]
             if file.endswith('.WAV'):
                 rate = None
                 sig = None
                 try:
-                    (rate,sig)= wav.read(fullFilename)
+                    (rate, sig) = wav.read(fullFilename)
                 except ValueError as e:
-                    if e.message == "File format 'NIST'... not understood.":
+                    x = e.args
+                    if x == "File format 'NIST'... not understood.":
                         print('You should use nist2wav.sh to convert NIST format files to WAV files first, nist2wav.sh is in core folder.')
+                        print(e)
                         return
                 feat = calcfeat_delta_delta(sig,rate,win_length=win_len,win_step=win_step,mode=mode,feature_len=feature_len)
                 feat = preprocessing.scale(feat)

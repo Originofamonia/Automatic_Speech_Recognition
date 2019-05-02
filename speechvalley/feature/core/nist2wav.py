@@ -11,6 +11,7 @@
 import subprocess
 import os
 
+
 def nist2wav(src_dir):
     count = 0
     for subdir, dirs, files in os.walk(src_dir):
@@ -21,5 +22,6 @@ def nist2wav(src_dir):
                 os.system("./sph2pipe_v2.5/sph2pipe "+fullFilename+" -f rif " +fullFilename+".wav")
                 print(fullFilename)
 
+
 if __name__ == '__main__':
-    nist2wav('/home/pony/wsj/')
+    nist2wav('./../../../timit/')
