@@ -55,7 +55,7 @@ def wav2feature(rootdir, save_directory, mode, feature_len, level, keywords, win
                     (rate, sig) = wav.read(fullFilename)
                 except ValueError as e:
                     x = e.args
-                    if x == "File format 'NIST'... not understood.":
+                    if x[0] == "File format 'NIST'... not understood.":
                         print('You should use nist2wav.sh to convert NIST format files to WAV files first, nist2wav.sh is in core folder.')
                         print(e)
                         return

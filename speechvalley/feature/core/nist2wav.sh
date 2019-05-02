@@ -12,9 +12,9 @@
 # ******************************************************
 
 
-target_dir=$1
+target_dir="./../../../timit/"
 
-fnames=(`find $target_dir -name "*.wv1"`)
+fnames=(`find $target_dir -name "*.WAV"`)
 
 for fname in "${fnames[@]}"
 do
