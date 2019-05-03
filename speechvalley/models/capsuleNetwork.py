@@ -19,8 +19,8 @@ def squashing(s):
     size of v: [batch_size, 1, next_channels*next_num_capsules, next_output_vector_len, 1]
     """
     assert s.dtype == tf.float32
-    squared_s = tf.reduce_sum(tf.square(s), axis=2, keep_dims=True)
-    normed_s = tf.norm(s, axis=2, keep_dims=True)
+    squared_s = tf.reduce_sum(tf.square(s), axis=2, keepdims=True)
+    normed_s = tf.norm(s, axis=2, keepdims=True)
     v = squared_s / (1 + squared_s) / normed_s * s
     assert v.get_shape() == s.get_shape()
     return v
@@ -45,17 +45,17 @@ def routing(u, next_num_channels, next_num_capsules, next_output_vector_len, num
         u_hat_without_backprop = tf.stop_gradient(u_hat, "u_hat_without_backprop")
         b_ij = tf.constant(np.zeros([shape[0], shape[1] * shape[2], next_num_channels * next_num_capsules, 1, 1]),
                            dtype=tf.float32)
-        c_ij = tf.nn.softmax(b_ij, dim=2)
+        c_ij = tf.nn.softmax(b_ij, axis=2)
         for r in range(num_iter):
             if r != num_iter - 1:
                 # size of s_j: [batch_size, 1, next_channels*next_num_capsules, next_output_vector_len, 1]
-                s_j = tf.reduce_sum(tf.multiply(c_ij, u_hat_without_backprop), axis=1, keep_dims=True)
+                s_j = tf.reduce_sum(tf.multiply(c_ij, u_hat_without_backprop), axis=1, keepdims=True)
                 v_j = squashing(s_j)
                 v_j = tf.tile(v_j, [1, shape[1] * shape[2], 1, 1, 1])
                 # b_ij += u_hat * v_j
                 b_ij = b_ij + tf.matmul(u_hat, v_j, transpose_a=True)
             else:
-                s_j = tf.reduce_sum(tf.multiply(c_ij, u_hat), axis=1, keep_dims=True)
+                s_j = tf.reduce_sum(tf.multiply(c_ij, u_hat), axis=1, keepdims=True)
                 v_j = squashing(s_j)
     # size of v_j: [batch_size, 1, next_channels*next_num_capsules, next_output_vector_len, 1]
     return v_j
@@ -131,12 +131,12 @@ class CapsuleNetwork(object):
         self.targetVals = tf.placeholder(tf.int32)
         self.targetShape = tf.placeholder(tf.int64)
         self.targetY = tf.SparseTensor(self.targetIxs, self.targetVals, self.targetShape)
-        self.seqLengths = tf.placeholder(tf.int32, shape=(args.batch_size))
+        self.seqLengths = tf.placeholder(tf.int32, shape=args.batch_size)
 
         self.config = {'name': args.model,
                        'num_layer': args.num_layer,
                        'num_hidden': args.num_hidden,
-                       'num_class': args.num_class,
+                       'num_class': args.num_classes,
                        'activation': args.activation,
                        'optimizer': args.optimizer,
                        'learning rate': args.learning_rate,
