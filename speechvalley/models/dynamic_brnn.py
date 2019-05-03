@@ -99,12 +99,12 @@ class DBiRNN(object):
             self.targetVals = tf.placeholder(tf.int32)
             self.targetShape = tf.placeholder(tf.int64)
             self.targetY = tf.SparseTensor(self.targetIxs, self.targetVals, self.targetShape)
-            self.seqLengths = tf.placeholder(tf.int32, shape=(args.batch_size))
+            self.seqLengths = tf.placeholder(tf.int32, shape=args.batch_size)
             self.config = {'name': args.model,
                            'rnncell': self.cell_fn,
                            'num_layer': args.num_layer,
                            'num_hidden': args.num_hidden,
-                           'num_class': args.num_class,
+                           'num_class': args.num_classes,
                            'activation': args.activation,
                            'optimizer': args.optimizer,
                            'learning rate': args.learning_rate,
@@ -115,8 +115,8 @@ class DBiRNN(object):
             with tf.name_scope('fc-layer'):
                 with tf.variable_scope('fc'):
                     weightsClasses = tf.Variable(
-                        tf.truncated_normal([args.num_hidden, args.num_class], name='weightsClasses'))
-                    biasesClasses = tf.Variable(tf.zeros([args.num_class]), name='biasesClasses')
+                        tf.truncated_normal([args.num_hidden, args.num_classes], name='weightsClasses'))
+                    biasesClasses = tf.Variable(tf.zeros([args.num_classes]), name='biasesClasses')
                     logits = [tf.matmul(t, weightsClasses) + biasesClasses for t in fbHrs]
             logits3d = tf.stack(logits)
             self.loss = tf.reduce_mean(tf.nn.ctc_loss(self.targetY, logits3d, self.seqLengths))

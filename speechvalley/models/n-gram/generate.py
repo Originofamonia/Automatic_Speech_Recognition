@@ -10,9 +10,11 @@
 import numpy as np
 import pickle
 
+
 def load_obj(name):
     with open(name + '.pkl', 'rb') as f:
         return pickle.load(f)
+
 
 def frequence(gram, type=2):
     if type == 2:
@@ -25,6 +27,7 @@ def frequence(gram, type=2):
     else:
         raise NotImplementedError('%s-gram is being developed'%type)
     return gram
+
 
 def generate_sentence(corpus_dir, seed='what are', length=10):
     bigram = load_obj(corpus_dir+'bigram')
@@ -40,6 +43,7 @@ def generate_sentence(corpus_dir, seed='what are', length=10):
             sample = np.random.choice(range(len(freq_bigram[prev])),p=probs)
             prev = freq_bigram[prev].keys()[sample]
             sent += ' '+prev
-    print sent
+    print(sent)
+
 
 generate_sentence('/home/pony/github/data/libri/ngram/', seed='love', length=10)

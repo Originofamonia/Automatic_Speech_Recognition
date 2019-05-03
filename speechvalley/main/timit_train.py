@@ -17,12 +17,16 @@ import numpy as np
 import tensorflow as tf
 from tensorflow.python.ops import ctc_ops as ctc
 
-from speechvalley.utils import describe, describe, getAttrs, output_to_sequence, load_batched_data, list_dirs, logging, count_params, target2phoneme, get_edit_distance, get_num_classes, check_path_exists, dotdict, activation_functions_dict, optimizer_functions_dict
+from speechvalley.utils import describe, describe, getAttrs, output_to_sequence, load_batched_data, list_dirs, logging, \
+    count_params, target2phoneme, get_edit_distance, get_num_classes, check_path_exists, dotdict, \
+    activation_functions_dict, optimizer_functions_dict
 from speechvalley.models import DBiRNN, DeepSpeech2, CapsuleNetwork
 
 from tensorflow.python.platform import flags
 from tensorflow.python.platform import app
-    
+config = tf.ConfigProto()
+config.gpu_options.allow_growth = True
+
 flags.DEFINE_string('task', 'timit', 'set task name of this program')
 flags.DEFINE_string('mode', 'train', 'set whether to train or test')
 flags.DEFINE_boolean('keep', False, 'set whether to restore a model, when test mode, keep should be set to True')
@@ -40,12 +44,11 @@ flags.DEFINE_integer('num_feature', 39, 'set the size of input feature')
 flags.DEFINE_integer('num_classes', 30, 'set the number of output classes')
 flags.DEFINE_integer('num_epochs', 500, 'set the number of epochs')
 flags.DEFINE_integer('num_iter', 3, 'set the number of iterations in routing')
-flags.DEFINE_float('lr', 0.0001, 'set the learning rate')
+flags.DEFINE_float('lr', 1e-4, 'set the learning rate')
 flags.DEFINE_float('dropout_prob', 0.1, 'set probability of dropout')
 flags.DEFINE_float('grad_clip', 1, 'set the threshold of gradient clipping, -1 denotes no clipping')
-flags.DEFINE_string('datadir', './data/timit', 'set the data root directory')
-flags.DEFINE_string('logdir', './log/timit', 'set the log directory')
-
+flags.DEFINE_string('datadir', './../../timit', 'set the data root directory')
+flags.DEFINE_string('logdir', './../../timit', 'set the log directory')
 
 FLAGS = flags.FLAGS
 
@@ -55,9 +58,9 @@ level = FLAGS.level
 if FLAGS.model == 'DBiRNN':
     model_fn = DBiRNN
 elif FLAGS.model == 'DeepSpeech2':
-    model_fn = DBiRNN 
+    model_fn = DeepSpeech2
 elif FLAGS.model == 'CapsuleNetwork':
-    model_fn = CapsuleNetwork 
+    model_fn = CapsuleNetwork
 else:
     model_fn = None
 rnncell = FLAGS.rnncell
@@ -84,38 +87,40 @@ check_path_exists([logdir, savedir, resultdir, loggingdir])
 
 mode = FLAGS.mode
 keep = FLAGS.keep
-keep_prob = 1-FLAGS.dropout_prob
+keep_prob = 1 - FLAGS.dropout_prob
 
-print('%s mode...'%str(mode))
+print('%s mode...' % str(mode))
 if mode == 'test':
-  batch_size = 100
-  num_epochs = 1
+    batch_size = 100
+    num_epochs = 1
 
 train_mfcc_dir = os.path.join(datadir, level, 'train', 'mfcc')
 train_label_dir = os.path.join(datadir, level, 'train', 'label')
 test_mfcc_dir = os.path.join(datadir, level, 'test', 'mfcc')
 test_label_dir = os.path.join(datadir, level, 'test', 'label')
-logfile = os.path.join(loggingdir, str(datetime.datetime.strftime(datetime.datetime.now(), 
-    '%Y-%m-%d %H:%M:%S') + '.txt').replace(' ', '').replace('/', ''))
+logfile = os.path.join(loggingdir, str(datetime.datetime.strftime(datetime.datetime.now(),
+                                                                  '%Y-%m-%d %H:%M:%S') + '.txt').replace(' ',
+                                                                                                         '').replace(
+    '/', ''))
 
 
 class Runner(object):
 
     def _default_configs(self):
-      return {'level': level,
-              'rnncell': rnncell,
-              'batch_size': batch_size,
-              'num_hidden': num_hidden,
-              'num_feature': num_feature,
-              'num_classes': num_classes,
-              'num_layer': num_layer,
-              'num_iter': num_iter,
-              'activation': activation_fn,
-              'optimizer': optimizer_fn,
-              'learning_rate': lr,
-              'keep_prob': keep_prob,
-              'grad_clip': grad_clip,
-            }
+        return {'level': level,
+                'rnncell': rnncell,
+                'batch_size': batch_size,
+                'num_hidden': num_hidden,
+                'num_feature': num_feature,
+                'num_classes': num_classes,
+                'num_layer': num_layer,
+                'num_iter': num_iter,
+                'activation': activation_fn,
+                'optimizer': optimizer_fn,
+                'learning_rate': lr,
+                'keep_prob': keep_prob,
+                'grad_clip': grad_clip,
+                }
 
     @describe
     def load_data(self, args, mode, type):
@@ -140,10 +145,10 @@ class Runner(object):
         model.config['all params'] = all_num_params
         print(model.config)
 
-        #with tf.Session(graph=model.graph) as sess:
-        with tf.Session() as sess:
+        # with tf.Session(graph=model.graph) as sess:
+        with tf.Session(config=config) as sess:
             # restore from stored model
-            if keep == True:
+            if keep:
                 ckpt = tf.train.get_checkpoint_state(savedir)
                 if ckpt and ckpt.model_checkpoint_path:
                     model.saver.restore(sess, ckpt.model_checkpoint_path)
@@ -153,7 +158,7 @@ class Runner(object):
                 sess.run(model.initial_op)
 
             for epoch in range(num_epochs):
-                ## training
+                # training
                 start = time.time()
                 if mode == 'train':
                     print('Epoch', epoch + 1, '...')
@@ -170,35 +175,38 @@ class Runner(object):
                     if level == 'cha':
                         if mode == 'train':
                             _, l, pre, y, er = sess.run([model.optimizer, model.loss,
-                                model.predictions, model.targetY, model.errorRate],
-                                feed_dict=feedDict)
+                                                         model.predictions, model.targetY, model.errorRate],
+                                                        feed_dict=feedDict)
 
                             batchErrors[batch] = er
-                            print('\n{} mode, total:{},batch:{}/{},epoch:{}/{},train loss={:.3f},mean train CER={:.3f}\n'.format(
-                                level, totalN, batch+1, len(batchRandIxs), epoch+1, num_epochs, l, er/batch_size))
+                            print(
+                                '\n{} mode, total:{},batch:{}/{},epoch:{}/{},train loss={:.3f},mean train CER={:.3f}\n'.format(
+                                    level, totalN, batch + 1, len(batchRandIxs), epoch + 1, num_epochs, l,
+                                                   er / batch_size))
 
                         elif mode == 'test':
-                            l, pre, y, er = sess.run([model.loss, model.predictions, 
-                                model.targetY, model.errorRate], feed_dict=feedDict)
+                            l, pre, y, er = sess.run([model.loss, model.predictions,
+                                                      model.targetY, model.errorRate], feed_dict=feedDict)
                             batchErrors[batch] = er
                             print('\n{} mode, total:{},batch:{}/{},test loss={:.3f},mean test CER={:.3f}\n'.format(
-                                level, totalN, batch+1, len(batchRandIxs), l, er/batch_size))
+                                level, totalN, batch + 1, len(batchRandIxs), l, er / batch_size))
 
                     elif level == 'phn':
                         if mode == 'train':
                             _, l, pre, y = sess.run([model.optimizer, model.loss,
-                                model.predictions, model.targetY],
-                                feed_dict=feedDict)
-                  
+                                                     model.predictions, model.targetY],
+                                                    feed_dict=feedDict)
+
                             er = get_edit_distance([pre.values], [y.values], True, level)
-                            print('\n{} mode, total:{},batch:{}/{},epoch:{}/{},train loss={:.3f},mean train PER={:.3f}\n'.format(
-                                level, totalN, batch+1, len(batchRandIxs), epoch+1, num_epochs, l, er))
+                            print(
+                                '\n{} mode, total:{},batch:{}/{},epoch:{}/{},train loss={:.3f},mean train PER={:.3f}\n'.format(
+                                    level, totalN, batch + 1, len(batchRandIxs), epoch + 1, num_epochs, l, er))
                             batchErrors[batch] = er * len(batchSeqLengths)
                         elif mode == 'test':
                             l, pre, y = sess.run([model.loss, model.predictions, model.targetY], feed_dict=feedDict)
                             er = get_edit_distance([pre.values], [y.values], True, level)
                             print('\n{} mode, total:{},batch:{}/{},test loss={:.3f},mean test PER={:.3f}\n'.format(
-                                level, totalN, batch+1, len(batchRandIxs), l, er))
+                                level, totalN, batch + 1, len(batchRandIxs), l, er))
                             batchErrors[batch] = er * len(batchSeqLengths)
 
                     # NOTE:
@@ -209,9 +217,8 @@ class Runner(object):
                         print('Truth:\n' + output_to_sequence(y, type=level))
                         print('Output:\n' + output_to_sequence(pre, type=level))
 
-                    
-                    if mode=='train' and ((epoch * len(batchRandIxs) + batch + 1) % 20 == 0 or (
-                           epoch == num_epochs - 1 and batch == len(batchRandIxs) - 1)):
+                    if mode == 'train' and ((epoch * len(batchRandIxs) + batch + 1) % 20 == 0 or (
+                            epoch == num_epochs - 1 and batch == len(batchRandIxs) - 1)):
                         checkpoint_path = os.path.join(savedir, 'model.ckpt')
                         model.saver.save(sess, checkpoint_path, global_step=epoch)
                         print('Model has been saved in {}'.format(savedir))
@@ -219,7 +226,7 @@ class Runner(object):
                 delta_time = end - start
                 print('Epoch ' + str(epoch + 1) + ' needs time:' + str(delta_time) + ' s')
 
-                if mode=='train':
+                if mode == 'train':
                     if (epoch + 1) % 1 == 0:
                         checkpoint_path = os.path.join(savedir, 'model.ckpt')
                         model.saver.save(sess, checkpoint_path, global_step=epoch)
@@ -229,8 +236,7 @@ class Runner(object):
                     logging(model, logfile, epochER, epoch, delta_time, mode='config')
                     logging(model, logfile, epochER, epoch, delta_time, mode=mode)
 
-
-                if mode=='test':
+                if mode == 'test':
                     with open(os.path.join(resultdir, level + '_result.txt'), 'a') as result:
                         result.write(output_to_sequence(y, type=level) + '\n')
                         result.write(output_to_sequence(pre, type=level) + '\n')
@@ -241,5 +247,5 @@ class Runner(object):
 
 
 if __name__ == '__main__':
-  runner = Runner()
-  runner.run()
+    runner = Runner()
+    runner.run()

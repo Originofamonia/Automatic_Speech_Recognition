@@ -8,16 +8,18 @@
 # ******************************************************
 import numpy
 from scipy.fftpack import dct
-
 from speechvalley.feature.core.sigprocess import audio2frame, pre_emphasis, spectrum_power
+
+
 try:
     xrange(1)
 except:
-    xrange=range
+    xrange = range
 
 
-
-def calcfeat_delta_delta(signal,samplerate=16000,win_length=0.025,win_step=0.01,filters_num=26,NFFT=512,low_freq=0,high_freq=None,pre_emphasis_coeff=0.97,cep_lifter=22,appendEnergy=True,mode='mfcc',feature_len=13):
+def calcfeat_delta_delta(signal, samplerate=16000, win_length=0.025, win_step=0.01, filters_num=26, NFFT=512,
+                         low_freq=0, high_freq=None, pre_emphasis_coeff=0.97, cep_lifter=22, appendEnergy=True,
+                         mode='mfcc', feature_len=13):
     """Calculate features, fist order difference, and second order difference coefficients.
         13 Mel-Frequency Cepstral Coefficients(MFCC), 13 first order difference
        coefficients, and 13 second order difference coefficients. There are 39 features
@@ -55,6 +57,7 @@ def calcfeat_delta_delta(signal,samplerate=16000,win_length=0.025,win_step=0.01,
     result = numpy.concatenate((feat,feat_delta,feat_delta_delta),axis=1)
     return result
 
+
 def delta(feat, N=2):
     """Compute delta features from a feature vector sequence.
 
@@ -66,13 +69,15 @@ def delta(feat, N=2):
     """
     NUMFRAMES = len(feat)
     feat = numpy.concatenate(([feat[0] for i in range(N)], feat, [feat[-1] for i in range(N)]))
-    denom = sum([2*i*i for i in range(1,N+1)])
+    denom = sum([2*i*i for i in range(1, N+1)])
     dfeat = []
     for j in range(NUMFRAMES):
         dfeat.append(numpy.sum([n*feat[N+j+n] for n in range(-1*N,N+1)], axis=0)/denom)
     return dfeat
 
-def calcMFCC(signal,samplerate=16000,win_length=0.025,win_step=0.01,feature_len=13,filters_num=26,NFFT=512,low_freq=0,high_freq=None,pre_emphasis_coeff=0.97,cep_lifter=22,appendEnergy=True,mode='mfcc'):
+
+def calcMFCC(signal, samplerate=16000, win_length=0.025, win_step=0.01, feature_len=13, filters_num=26, NFFT=512,
+             low_freq=0, high_freq=None, pre_emphasis_coeff=0.97, cep_lifter=22, appendEnergy=True, mode='mfcc'):
     """Caculate Features.
     Args:
         signal: 1-D numpy array.
@@ -98,7 +103,7 @@ def calcMFCC(signal,samplerate=16000,win_length=0.025,win_step=0.01,feature_len=
         2-D numpy array with shape (NUMFRAMES, features). Each frame containing feature_len of features.
     """
     filters_num = 2*feature_len
-    feat,energy=fbank(signal,samplerate,win_length,win_step,filters_num,NFFT,low_freq,high_freq,pre_emphasis_coeff)
+    feat, energy = fbank(signal,samplerate,win_length,win_step,filters_num,NFFT,low_freq,high_freq,pre_emphasis_coeff)
     feat=numpy.log(feat)
     # Performing DCT and get first 13 coefficients
     if mode == 'mfcc':
@@ -111,7 +116,8 @@ def calcMFCC(signal,samplerate=16000,win_length=0.025,win_step=0.01,feature_len=
         feat[:,0]=numpy.log(energy)
     return feat
 
-def fbank(signal,samplerate=16000,win_length=0.025,win_step=0.01,filters_num=26,NFFT=512,low_freq=0,high_freq=None,pre_emphasis_coeff=0.97):
+
+def fbank(signal, samplerate=16000, win_length=0.025, win_step=0.01, filters_num=26, NFFT=512,low_freq=0,high_freq=None,pre_emphasis_coeff=0.97):
     """Perform pre-emphasis -> framing -> get magnitude -> FFT -> Mel Filtering.
     Args:
         signal: 1-D numpy array.

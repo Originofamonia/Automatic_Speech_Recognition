@@ -23,7 +23,7 @@ import os
 import argparse
 import glob
 import sys
-import sklearn
+# import sklearn
 import numpy as np
 import scipy.io.wavfile as wav
 from sklearn import preprocessing
@@ -90,7 +90,7 @@ def wav2feature(rootdir, save_directory, mode, feature_len, level, keywords, win
                             if seq2seq is True:
                                 phenome.append(28)
                             for c in s:
-                                if c=="'":
+                                if c == "'":
                                     phenome.append(27)
                                 else:
                                     phenome.append(ord(c)-96)
@@ -102,14 +102,14 @@ def wav2feature(rootdir, save_directory, mode, feature_len, level, keywords, win
                     print(phenome)
                     print(sentence)
 
-                count+=1
-                print('file index:',count)
+                count += 1
+                print('file index:', count)
                 if save:
-                    featureFilename = feat_dir + filenameNoSuffix.split('/')[-2]+'-'+filenameNoSuffix.split('/')[-1]+'.npy'
-                    np.save(featureFilename,feat)
-                    labelFilename = label_dir + filenameNoSuffix.split('/')[-2]+'-'+filenameNoSuffix.split('/')[-1]+'.npy'
+                    featureFilename = feat_dir + '/' + filenameNoSuffix.split('/')[-2]+'-'+filenameNoSuffix.split('/')[-1]+'.npy'
+                    np.save(featureFilename, feat)
+                    labelFilename = label_dir + '/' + filenameNoSuffix.split('/')[-2]+'-'+filenameNoSuffix.split('/')[-1]+'.npy'
                     print(labelFilename)
-                    np.save(labelFilename,phenome)
+                    np.save(labelFilename, phenome)
 
 
 if __name__ == '__main__':
@@ -119,14 +119,13 @@ if __name__ == '__main__':
                                      Script to preprocess timit data
                                      """)
     parser.add_argument("path", help="Directory where Timit dataset is contained", type=str)
-    parser.add_argument("save", help="Directory where preprocessed arrays are to be saved",
-                        type=str)
+    parser.add_argument("save", help="Directory where preprocessed arrays are to be saved", type=str)
     parser.add_argument("-n", "--name", help="Name of the dataset",
                         choices=['train', 'test'],
                         type=str, default='train')
     parser.add_argument("-l", "--level", help="Level",
                         choices=['cha', 'phn'],
-                        type=str, default='cha')
+                        type=str, default='phn')
     parser.add_argument("-m", "--mode", help="Mode",
                         choices=['mfcc', 'fbank'],
                         type=str, default='mfcc')

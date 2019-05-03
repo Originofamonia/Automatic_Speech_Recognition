@@ -4,7 +4,7 @@
 # Last modified: 2017-12-09 11:00
 # Email        : zzw922cn@gmail.com
 # Filename     : ngram.py
-# Description  : ngram model 
+# Description  : ngram model
 # ******************************************************
 
 import numpy as np
@@ -12,9 +12,11 @@ import os
 import operator
 import pickle
 
+
 def save_obj(name, obj):
     with open(name + '.pkl', 'wb') as f:
         pickle.dump(obj, f, pickle.HIGHEST_PROTOCOL)
+
 
 class NGram:
     def __init__(self, rootdir):
@@ -61,6 +63,7 @@ class NGram:
 
         return corpus, word_count, bigram, trigram
 
+
 def inc_dict(dic, key):
     if not dic.has_key(key):
         dic[key] = 0
@@ -76,4 +79,4 @@ if __name__ == '__main__':
     save_obj(savedir+'word_count', word_count)
     save_obj(savedir+'bigram', bigram)
     save_obj(savedir+'trigram', trigram)
-    #sorted_word_count = sorted(word_count.items(), key=operator.itemgetter(1), reverse=True)
+    # sorted_word_count = sorted(word_count.items(), key=operator.itemgetter(1), reverse=True)

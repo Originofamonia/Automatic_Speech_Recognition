@@ -12,6 +12,7 @@ import scipy.io.wavfile as wav
 import librosa
 from sklearn import preprocessing
 
+
 def spectrogramPower(audio, window_size=0.02, window_stride=0.01):
     """ short time fourier transform
 
