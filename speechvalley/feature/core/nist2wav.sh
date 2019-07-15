@@ -12,7 +12,7 @@
 # ******************************************************
 
 
-target_dir="./../../../timit/"
+target_dir="./../../../../pytorch-kaldi/timit/"
 
 fnames=(`find $target_dir -name "*.WAV"`)
 
